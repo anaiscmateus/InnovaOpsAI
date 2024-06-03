@@ -1,4 +1,5 @@
-import "./App.css";
+import Bot from "./components/Bot";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -49,10 +50,9 @@ function App() {
             </p>
           </li>
         </ul>
+        <Bot/>
       </main>
-      <footer className="bg-black p-4 text-white text-center">
-        © 2024 InnovaOpsAI - All rights reserved.
-      </footer>
+      <Footer />
     </div>
   );
 }
