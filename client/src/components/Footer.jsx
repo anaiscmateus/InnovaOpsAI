@@ -1,3 +1,4 @@
+// Footer.jsx
 import { useState, useEffect } from "react";
 
 function Footer() {
@@ -8,8 +9,8 @@ function Footer() {
     setYear(currentYear);
   }, []);
   return (
-    <footer className="bg-black p-4 text-white text-center">
-      © {year} InnovaOpsAI - All rights reserved
+    <footer className="bg-black p-4 text-white text-center" role="contentinfo">
+      © {year} InnovaOps.ai - All rights reserved
     </footer>
   );
 }

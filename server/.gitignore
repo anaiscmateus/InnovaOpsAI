@@ -12,6 +12,14 @@ dist-ssr
 *.local
 .env
 
+# python
+json_convert.py
+fine_tuned_model.py
+
+# json
+scripts/*.json
+scripts/*.jsonl
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
