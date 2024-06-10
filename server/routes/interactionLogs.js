@@ -1,56 +1,105 @@
-// routes/interactionLogs.js
-import express from 'express';
-const router = express.Router();
+import mongoose from 'mongoose';
 import InteractionLog from '../models/InteractionLog.js';
 
+// Helper function to connect to the database
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('MongoDB connected...');
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+};
+
 // Get all interaction logs
-router.get('/', async (req, res) => {
-    try {
-        const logs = await InteractionLog.find();
-        res.json(logs);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+export async function getAllInteractionLogs(event, context, callback) {
+  await connectDB();
+  try {
+    const logs = await InteractionLog.find();
+    callback(null, {
+      statusCode: 200,
+      body: JSON.stringify(logs),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}
 
 // Get logs by session ID
-router.get('/session/:sessionId', async (req, res) => {
-    try {
-        const logs = await InteractionLog.find({ sessionId: req.params.sessionId });
-        res.json(logs);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+export async function getLogsBySessionId(event, context, callback) {
+  await connectDB();
+  const { sessionId } = event.pathParameters;
+
+  try {
+    const logs = await InteractionLog.find({ sessionId });
+    callback(null, {
+      statusCode: 200,
+      body: JSON.stringify(logs),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}
 
 // Create a new log
-router.post('/', async (req, res) => {
-    const newLog = new InteractionLog({
-        logId: req.body.logId,
-        sessionId: req.body.sessionId,
-        eventType: req.body.eventType,
-        details: req.body.details,
-    });
+export async function createLog(event, context, callback) {
+  await connectDB();
+  const req = JSON.parse(event.body);
+  const newLog = new InteractionLog({
+    logId: req.logId,
+    sessionId: req.sessionId,
+    eventType: req.eventType,
+    details: req.details,
+  });
 
-    try {
-        const log = await newLog.save();
-        res.status(201).json(log);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
+  try {
+    const log = await newLog.save();
+    callback(null, {
+      statusCode: 201,
+      body: JSON.stringify(log),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 400,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}
 
 // Delete a log
-router.delete('/:id', async (req, res) => {
-    try {
-        const log = await InteractionLog.findById(req.params.id);
-        if (!log) return res.status(404).json({ message: 'Log not found' });
+export async function deleteLog(event, context, callback) {
+  await connectDB();
+  const { id } = event.pathParameters;
 
-        await log.remove();
-        res.json({ message: 'Log removed' });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  try {
+    const log = await InteractionLog.findById(id);
+    if (!log) {
+      callback(null, {
+        statusCode: 404,
+        body: JSON.stringify({ message: 'Log not found' }),
+      });
+      return;
     }
-});
 
-export default router;
+    await log.remove();
+    callback(null, {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Log removed' }),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}

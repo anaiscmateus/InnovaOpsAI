@@ -31,5 +31,5 @@ scripts/*.jsonl
 *.sln
 *.sw?
 
-# Local Netlify folder
-.netlify
+# text files
+instructions.txt

@@ -1,56 +1,105 @@
-// routes/messages.js
-import express from 'express';
-const router = express.Router();
+import mongoose from 'mongoose';
 import Message from '../models/Message.js';
 
+// Helper function to connect to the database
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('MongoDB connected...');
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+};
+
 // Get all messages
-router.get('/', async (req, res) => {
-    try {
-        const messages = await Message.find();
-        res.json(messages);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+export async function getAllMessages(event, context, callback) {
+  await connectDB();
+  try {
+    const messages = await Message.find();
+    callback(null, {
+      statusCode: 200,
+      body: JSON.stringify(messages),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}
 
 // Get messages by session ID
-router.get('/session/:sessionId', async (req, res) => {
-    try {
-        const messages = await Message.find({ sessionId: req.params.sessionId });
-        res.json(messages);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+export async function getMessagesBySessionId(event, context, callback) {
+  await connectDB();
+  const { sessionId } = event.pathParameters;
+
+  try {
+    const messages = await Message.find({ sessionId });
+    callback(null, {
+      statusCode: 200,
+      body: JSON.stringify(messages),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}
 
 // Create a new message
-router.post('/', async (req, res) => {
-    const newMessage = new Message({
-        messageId: req.body.messageId,
-        sessionId: req.body.sessionId,
-        sender: req.body.sender,
-        content: req.body.content,
-    });
+export async function createMessage(event, context, callback) {
+  await connectDB();
+  const req = JSON.parse(event.body);
+  const newMessage = new Message({
+    messageId: req.messageId,
+    sessionId: req.sessionId,
+    sender: req.sender,
+    content: req.content,
+  });
 
-    try {
-        const message = await newMessage.save();
-        res.status(201).json(message);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
+  try {
+    const message = await newMessage.save();
+    callback(null, {
+      statusCode: 201,
+      body: JSON.stringify(message),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 400,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}
 
 // Delete a message
-router.delete('/:id', async (req, res) => {
-    try {
-        const message = await Message.findById(req.params.id);
-        if (!message) return res.status(404).json({ message: 'Message not found' });
+export async function deleteMessage(event, context, callback) {
+  await connectDB();
+  const { id } = event.pathParameters;
 
-        await message.remove();
-        res.json({ message: 'Message removed' });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  try {
+    const message = await Message.findById(id);
+    if (!message) {
+      callback(null, {
+        statusCode: 404,
+        body: JSON.stringify({ message: 'Message not found' }),
+      });
+      return;
     }
-});
 
-export default router;
+    await message.remove();
+    callback(null, {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Message removed' }),
+    });
+  } catch (err) {
+    callback(null, {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    });
+  }
+}

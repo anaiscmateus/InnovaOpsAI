@@ -1,0 +1,41 @@
+edition: 1.0.0
+name: optimops-backend
+access: default
+
+services:
+  my-service:
+    component: devsapp/fc
+    props:
+      region: cn-hangzhou
+      service:
+        name: optimops-service
+        description: "optimops serverless service"
+        internetAccess: true
+        logConfig:
+          project: optimsops-log-project
+          logstore: optimsops-logstore
+        role: ${env.ALIYUN_ROLE_ARN}
+      function:
+        name: my-function
+        handler: index.handler
+        runtime: nodejs14
+        codeUri: ./
+        memorySize: 512
+        timeout: 120
+        environmentVariables:
+          MONGO_URI: ${env.MONGO_URI}
+          MODEL: ${env.MODEL}
+          NODE_ENV: production
+        vpcConfig:
+          vpcId: ${env.ALIYUN_VPC_ID}
+          vSwitchIds:
+            - ${env.ALIYUN_VSWITCH_ID}
+          securityGroupId: ${env.ALIYUN_SECURITY_GROUP_ID}
+      triggers:
+        - name: httpTrigger
+          type: http
+          config:
+            authType: anonymous
+            methods:
+              - GET
+              - POST

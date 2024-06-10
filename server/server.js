@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -72,6 +73,5 @@ app.post('/api/chat', (req, res) => {
   pythonProcess.stdin.end();
 });
 
-// Define the PORT and start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Export the Express app
+export default app;
